@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "user": "askforvarn@gmail.com",
+  "password": "AIzaSyD30a1PVzpiaM2Gv7W9wVhsnwkDCfFyDTg",
+  "from_email": "askforvarn@gmail.com",
+  "sender_name": "Aeronautics E-book Vault"
+}

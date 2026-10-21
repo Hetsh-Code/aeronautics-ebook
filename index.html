@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aeronautics E-book — Ultimate Aviation Vault</title>
+  <meta name="description" content="Experience high-fidelity cracked flight simulators for Android and Windows. Fully unlocked DLCs, photorealistic scenery, and online multiplayer fixes.">
+  <script>
+    (function() {
+      try {
+        const saved = localStorage.getItem('flight_sim_theme') || 'system';
+        let resolved = saved;
+        if (saved === 'system') {
+          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', resolved);
+      } catch (e) {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-cockpit">
+  <!-- Hidden Liquid Glass SVG Filter Pipeline -->
+  <svg style="display: none; position: absolute; width: 0; height: 0;" aria-hidden="true" focusable="false">
+    <filter id="lg-filter" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035 0.035" numOctaves="2" result="noise" />
+      <feGaussianBlur in="noise" stdDeviation="2.5" result="smoothedNoise" />
+      <feDisplacementMap in="SourceGraphic" in2="smoothedNoise" scale="14" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+    </filter>
+  </svg>
+
+  <!-- Interactive Ambient HUD Backdrop -->
+  <div class="background-backdrop">
+    <div class="bg-overlay"></div>
+    <div class="radar-grid"></div>
+    <div class="scanline"></div>
+  </div>
+
+  <!-- Smooth Blurred Cursor Doodle Follower -->
+  <div class="cursor-doodle" id="cursorDoodle" aria-hidden="true">
+    <div class="doodle-blob"></div>
+  </div>
+
+  <!-- Floating HUD Top Toolbar: Theme Toggle (Logos Only: Light, System, Dark) & Audio Toggle -->
+  <div class="hud-top-toolbar">
+    <!-- Theme Switcher: Logos Only -->
+    <div class="theme-switcher-pill" role="radiogroup" aria-label="Theme Switcher">
+      <button class="theme-logo-btn" id="themeLightBtn" data-theme-val="light" title="Light Mode" aria-label="Light Mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+
+      <button class="theme-logo-btn active" id="themeSystemBtn" data-theme-val="system" title="System Preference" aria-label="System Preference">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      </button>
+
+      <button class="theme-logo-btn" id="themeDarkBtn" data-theme-val="dark" title="Dark Mode" aria-label="Dark Mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Audio Control Toggle -->
+    <div class="hud-audio-control" id="audioControlBtn" title="Toggle Cockpit Audio Effects">
+      <span class="audio-icon" id="audioIcon">🔊</span>
+      <span class="audio-label" id="audioLabel">AUDIO: ON</span>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- STEP 1: SPLASH SCREEN (FADE TEXT "Aeronautics E-book") -->
+  <!-- ======================================================== -->
+  <section class="screen-view active-view" id="splashScreen">
+    <div class="splash-container">
+      <div class="hud-crosshair top-left"></div>
+      <div class="hud-crosshair top-right"></div>
+      <div class="hud-crosshair bottom-left"></div>
+      <div class="hud-crosshair bottom-right"></div>
+
+      <div class="telemetry-badge">
+        <span class="telemetry-indicator"></span>
+        FLIGHT TELEMETRY SYS // LINK ESTABLISHED
+      </div>
+
+      <h1 class="splash-fade-text" id="splashMainTitle">
+        Aeronautics <span class="no-break-ebook">E-Book</span>
+      </h1>
+
+      <p class="splash-sub-text">
+        NEXT-GEN AERONAUTICS ARCHIVE &bull; 1000 CHAPTERS &bull; FLIGHT PRINCIPLES
+      </p>
+
+      <div class="splash-loader-bar">
+        <div class="splash-loader-progress" id="splashProgress"></div>
+      </div>
+
+      <div class="splash-status-text" id="splashStatus">
+        CALIBRATING AVIONICS &amp; SATELLITE RADAR...
+      </div>
+
+      <button class="btn-skip-intro" id="skipIntroBtn">
+        ENTER TERMINAL &rarr;
+      </button>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- STEP 2: SIGN IN PAGE (Email & Name) -->
+  <!-- ======================================================== -->
+  <section class="screen-view hidden-view" id="signInScreen">
+    <div class="portal-card glass-panel">
+      <div class="card-edge-glow"></div>
+      
+      <div class="portal-header">
+        <div class="portal-badge">SECURE ACCESS LEVEL 4</div>
+        <h2 class="portal-title">PILOT VERIFICATION</h2>
+        <p class="portal-desc">Enter your reader credentials. A 10-digit authorization key will be sent directly to your email.</p>
+      </div>
+
+      <form id="signInForm" class="portal-form" novalidate>
+        <div class="form-group">
+          <label for="pilotName" class="form-label">
+            <span class="label-icon">👤</span> PILOT CALLSIGN / FULL NAME
+          </label>
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              id="pilotName" 
+              class="hud-input" 
+              placeholder="e.g. Capt. Maverick" 
+              autocomplete="name"
+              required
+            >
+            <span class="input-glow"></span>
+          </div>
+          <span class="field-error" id="nameError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="pilotEmail" class="form-label">
+            <span class="label-icon">✉️</span> EMAIL ADDRESS
+          </label>
+          <div class="input-wrapper">
+            <input 
+              type="email" 
+              id="pilotEmail" 
+              class="hud-input" 
+              placeholder="e.g. aviator@skyvault.org" 
+              autocomplete="email"
+              required
+            >
+            <span class="input-glow"></span>
+          </div>
+          <span class="field-error" id="emailError"></span>
+        </div>
+
+        <button type="submit" class="btn-primary-hud" id="requestKeyBtn">
+          <span class="btn-glimmer"></span>
+          <span class="btn-content">
+            <span id="transmitBtnText">ENTER AERONAUTICS <span class="no-break-ebook">E-BOOK</span> VAULT</span>
+            <span class="btn-arrow">&rarr;</span>
+          </span>
+        </button>
+      </form>
+
+      <div class="portal-footer">
+        <div class="security-stamp">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          INSTANT ACCESS &bull; NO VERIFICATION REQUIRED
+        </div>
+        <div class="portal-quick-sublinks">
+          <span class="pqs-label">DIRECT SUBLINKS:</span>
+          <a href="/homepage" class="pqs-pill">/homepage</a>
+          <a href="/e-book" class="pqs-pill">/e-book</a>
+          <a href="/diagrams" class="pqs-pill">/diagrams</a>
+          <a href="/analytics" class="pqs-pill">/analytics</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- STEP 4: MAIN PAGE (Dashboard with 2 Boxes: Android & Windows) -->
+  <!-- ======================================================== -->
+  <section class="screen-view hidden-view" id="mainDashboardScreen">
+    <!-- Navigation Bar -->
+    <header class="dashboard-header">
+      <div class="header-branding">
+        <a href="/homepage" class="logo-mark-link" title="Flight Deck Dashboard">
+          <div class="logo-mark">
+            <span class="radar-dot"></span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"></path></svg>
+          </div>
+        </a>
+        <div class="logo-text">
+          <span class="brand-title">AERONAUTICS <span class="no-break-ebook">E-BOOK</span></span>
+          <span class="brand-sub">AUTHORIZED ACCESS VAULT &bull; DIGITAL CHAPTER ARCHIVE</span>
+        </div>
+      </div>
+
+      <!-- Live SPA Sublinks Navigation Bar -->
+      <nav class="dashboard-nav-sublinks" aria-label="Portal Direct Sublinks">
+        <a href="/homepage" class="nav-sublink active" data-nav="dashboard" title="Flight Deck & Chapters">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span class="nav-sublink-label">/homepage</span>
+        </a>
+        <a href="/e-book" class="nav-sublink" data-nav="ebook" title="Interactive 1000-Chapter Aeronautics Reader">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span class="nav-sublink-label">/e-book</span>
+        </a>
+        <a href="/diagrams" class="nav-sublink" data-nav="diagrams" title="5,000 Technical Diagrams Blueprint Explorer">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          <span class="nav-sublink-label">/diagrams (5,000)</span>
+        </a>
+        <a href="/analytics" class="nav-sublink" data-nav="analytics" title="Live Flight Study & Learning Telemetry">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          <span class="nav-sublink-label">/analytics</span>
+        </a>
+      </nav>
+
+      <div class="header-profile">
+        <div class="profile-info">
+          <span class="pilot-greeting">WELCOME ABOARD</span>
+          <span class="pilot-callsign" id="userCallsignBadge">CAPT. PILOT</span>
+          <span class="pilot-email" id="userEmailBadge">pilot@vault.org</span>
+        </div>
+        <div class="profile-badge verified-tag">
+          <span class="status-indicator-green"></span>
+          AUTHENTICATED
+        </div>
+        <button class="btn-logout" id="logoutBtn" title="Lock & Disconnect Session">
+          DISCONNECT ⏻
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="dashboard-content">
+      
+      <!-- ============================================== -->
+      <!-- VIEW 1: PLATFORMS SELECTION (2 BOXES: ANDROID & WINDOWS) -->
+      <!-- ============================================== -->
+      <section class="platforms-section" id="platformsView">
+        <div class="vault-hero-strip interactive-hero-strip" id="vaultHeroStrip" role="button" tabindex="0" title="Click anywhere on this banner to open Complete Flight Study Analysis">
+          <div class="hero-strip-content">
+            <div class="hero-chip">AERONAUTICS <span class="no-break-ebook">E-BOOK</span> // 2026 EDITION</div>
+            <h2 class="hero-headline">AERONAUTICS <span class="no-break-ebook">E-BOOK</span></h2>
+            <p class="hero-subline">
+              Select your module below to browse chapters, study aeronautical engineering, and track your reading progress.
+            </p>
+            <div class="hero-analysis-badge" id="btnHeroAnalysisBadge">
+              <span class="analysis-pulse-dot"></span>
+              <span class="hab-text">📊 CLICK FOR COMPLETE FLIGHT STUDY &amp; LEARNING ANALYSIS ➔</span>
+            </div>
+          </div>
+          <div class="hero-telemetry-stats" id="heroTelemetryStats">
+            <div class="stat-cell interactive-stat-cell" id="statCellChapters" style="cursor:pointer;" title="Click to view full reading telemetry">
+              <span class="stat-number" id="statChaptersRead">0</span>
+              <span class="stat-label">CHAPTERS READ</span>
+            </div>
+            <div class="stat-cell interactive-stat-cell" id="statCellTotal" style="cursor:pointer;" title="Click to view curriculum load">
+              <span class="stat-number" id="statTotalChapters">1000</span>
+              <span class="stat-label">TOTAL CHAPTERS</span>
+            </div>
+            <div class="stat-cell interactive-stat-cell" id="statCellPercentage" style="cursor:pointer;" title="Click to view mastery percentage">
+              <span class="stat-number" id="statPercentageLearned">0%</span>
+              <span class="stat-label">PERCENTAGE LEARNED</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="platform-boxes-grid">
+          <!-- AERONAUTICS E-BOOK MAIN CARD -->
+          <article class="platform-card platform-windows clickable-platform-card" id="boxWindows" tabindex="0" role="button" aria-label="Open the Ultimate Aeronautics E-Book">
+            <div class="card-glow-border"></div>
+
+            <div class="card-media-wrapper">
+              <img src="./assets/windows.png" alt="Ultimate Aeronautics E-Book" class="card-banner-img card-banner-dark" id="windowsCardBannerDark">
+              <img src="./assets/windows2.png" alt="Ultimate Aeronautics E-Book" class="card-banner-img card-banner-light" id="windowsCardBannerLight">
+              <div class="media-overlay"></div>
+              <div class="platform-badge windows-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <span>Aeronautics <span class="no-break-ebook">E-Book</span></span>
+              </div>
+              <div class="version-tag gold-tag">1000 CHAPTERS</div>
+            </div>
+
+            <div class="card-body">
+              <div class="card-title-row">
+                <h3 class="platform-title">Ultimate Aeronautics <span class="no-break-ebook">E-Book</span></h3>
+              </div>
+
+              <p class="platform-summary">
+                Comprehensive digital master edition covering aerodynamics, atmospheric flight physics, aircraft structures, propulsion engineering, and modern commercial avionics systems.
+              </p>
+
+              <div class="platform-card-action">
+                <a href="/e-book" class="btn-open-platform btn-open-windows" id="btnOpenEbook" role="button" title="Launch Interactive Aeronautics E-Book Reader">
+                  Open the Ultimate Aeronautics <span class="no-break-ebook">E-Book</span> &rarr;
+                </a>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- VIEW 2: ANDROID FLIGHT SIMULATORS -->
+      <!-- ============================================== -->
+      <section class="platform-subview hidden-subview" id="androidSimsView">
+        <div class="subview-header">
+          <button class="btn-subview-back" id="btnBackFromAndroid" type="button">
+            &larr; BACK TO PLATFORMS
+          </button>
+          <div class="subview-title-block">
+            <div class="subview-badge">PLATFORM // ANDROID</div>
+            <h2 class="subview-heading">ANDROID FLIGHT SIMULATORS</h2>
+            <p class="subview-sub">Download cracked and unlocked APK &amp; APKS packages directly to your device.</p>
+          </div>
+        </div>
+
+        <div class="sim-games-grid">
+          
+          <!-- 1. X-Plane Flight Simulator -->
+          <article class="sim-game-card">
+            <div class="sim-card-top">
+              <div class="sim-logo-frame">
+                <img src="./assets/logo_xplane.png" alt="X-Plane Flight Simulator Official Logo" class="sim-logo-img">
+              </div>
+              <div class="sim-info-block">
+                <div class="sim-badge">CRACKED &bull; UNLOCKED</div>
+                <h3 class="sim-title">X-Plane Flight Simulator</h3>
+                <div class="sim-meta-tags">
+                  <span class="meta-tag">APK Package</span>
+                  <span class="meta-tag">832 MB</span>
+                  <span class="meta-tag green-tag">Full Unlocked</span>
+                </div>
+              </div>
+            </div>
+            <p class="sim-summary">
+              FAA-grade aerodynamics simulation on mobile with 3D interactive cockpits, emergency systems, supersonic combat jets, and global scenery.
+            </p>
+            <div class="sim-card-footer">
+              <a href="./installations/android/X-plane%20Flight%20Simulator.apk" download="X-plane Flight Simulator.apk" class="btn-download-apk" id="downloadXPlane">
+                <span class="btn-dl-icon">⬇</span>
+                <span class="btn-dl-text">DOWNLOAD APK (832 MB)</span>
+              </a>
+            </div>
+          </article>
+
+          <!-- 2. Infinite Flight Simulator -->
+          <article class="sim-game-card">
+            <div class="sim-card-top">
+              <div class="sim-logo-frame">
+                <img src="./assets/logo_infiniteflight.png" alt="Infinite Flight Simulator Official Logo" class="sim-logo-img">
+              </div>
+              <div class="sim-info-block">
+                <div class="sim-badge">CRACKED &bull; UNLOCKED</div>
+                <h3 class="sim-title">Infinite Flight Simulator</h3>
+                <div class="sim-meta-tags">
+                  <span class="meta-tag">APKS Package</span>
+                  <span class="meta-tag">591 MB</span>
+                  <span class="meta-tag green-tag">Pro Fleet Bypassed</span>
+                </div>
+              </div>
+            </div>
+            <p class="sim-summary">
+              High-definition satellite topography, dynamic weather, custom weight &amp; balance configuration, and unlocked commercial airliner fleet.
+            </p>
+            <div class="sim-card-footer">
+              <a href="./installations/android/Infinite%20Flight%20Simulator.apks" download="Infinite Flight Simulator.apks" class="btn-download-apk" id="downloadInfinite">
+                <span class="btn-dl-icon">⬇</span>
+                <span class="btn-dl-text">DOWNLOAD APKS (591 MB)</span>
+              </a>
+            </div>
+          </article>
+
+          <!-- 3. Real Flight Simulator -->
+          <article class="sim-game-card">
+            <div class="sim-card-top">
+              <div class="sim-logo-frame">
+                <img src="./assets/logo_rfs.png" alt="Real Flight Simulator Official Logo" class="sim-logo-img">
+              </div>
+              <div class="sim-info-block">
+                <div class="sim-badge">CRACKED &bull; UNLOCKED</div>
+                <h3 class="sim-title">Real Flight Simulator</h3>
+                <div class="sim-meta-tags">
+                  <span class="meta-tag">APK Package</span>
+                  <span class="meta-tag">470 MB</span>
+                  <span class="meta-tag green-tag">RFS Pro Unlocked</span>
+                </div>
+              </div>
+            </div>
+            <p class="sim-summary">
+              RORTOS advanced flight systems, customized flight plans, real-time airline traffic, HD ground textures, and 3D satellite terminals.
+            </p>
+            <div class="sim-card-footer">
+              <a href="./installations/android/Real%20Flight%20Simulator.apk" download="Real Flight Simulator.apk" class="btn-download-apk" id="downloadRFS">
+                <span class="btn-dl-icon">⬇</span>
+                <span class="btn-dl-text">DOWNLOAD APK (470 MB)</span>
+              </a>
+            </div>
+          </article>
+
+          <!-- 4. Turboprop Flight Simulator -->
+          <article class="sim-game-card">
+            <div class="sim-card-top">
+              <div class="sim-logo-frame">
+                <img src="./assets/logo_turboprop.png" alt="Turboprop Flight Simulator Official Logo" class="sim-logo-img">
+              </div>
+              <div class="sim-info-block">
+                <div class="sim-badge">CRACKED &bull; UNLOCKED</div>
+                <h3 class="sim-title">Turboprop Flight Simulator</h3>
+                <div class="sim-meta-tags">
+                  <span class="meta-tag">APK Package</span>
+                  <span class="meta-tag">80 MB</span>
+                  <span class="meta-tag green-tag">All Items Unlocked</span>
+                </div>
+              </div>
+            </div>
+            <p class="sim-summary">
+              Pilot military tactical airlifters, regional turboprops, seaplanes, and coast guard aircraft with realistic damage physics and cargo drops.
+            </p>
+            <div class="sim-card-footer">
+              <a href="./installations/android/Turboprop%20Flight%20Simulator.apk" download="Turboprop Flight Simulator.apk" class="btn-download-apk" id="downloadTurboprop">
+                <span class="btn-dl-icon">⬇</span>
+                <span class="btn-dl-text">DOWNLOAD APK (80 MB)</span>
+              </a>
+            </div>
+          </article>
+
+          <!-- 5. Flight Simulator Advanced -->
+          <article class="sim-game-card">
+            <div class="sim-card-top">
+              <div class="sim-logo-frame">
+                <img src="./assets/logo_fsadvanced.png" alt="Flight Simulator Advanced Official Logo" class="sim-logo-img">
+              </div>
+              <div class="sim-info-block">
+                <div class="sim-badge">CRACKED &bull; UNLOCKED</div>
+                <h3 class="sim-title">Flight Simulator Advanced</h3>
+                <div class="sim-meta-tags">
+                  <span class="meta-tag">APK Package</span>
+                  <span class="meta-tag">959 MB</span>
+                  <span class="meta-tag green-tag">Full Edition</span>
+                </div>
+              </div>
+            </div>
+            <p class="sim-summary">
+              Next-generation mobile flight physics, hyper-detailed cockpit instruments, true-to-life navigation waypoints, and global unlocked airspace.
+            </p>
+            <div class="sim-card-footer">
+              <a href="./installations/android/Flight%20Simulator%20Advanced.apk" download="Flight Simulator Advanced.apk" class="btn-download-apk" id="downloadFSAdvanced">
+                <span class="btn-dl-icon">⬇</span>
+                <span class="btn-dl-text">DOWNLOAD APK (959 MB)</span>
+              </a>
+            </div>
+          </article>
+
+          <!-- 6. Avion Flight Simulator -->
+          <article class="sim-game-card">
+            <div class="sim-card-top">
+              <div class="sim-logo-frame">
+                <img src="./assets/logo_avionflight.png" alt="Avion Flight Simulator Official Logo" class="sim-logo-img">
+              </div>
+              <div class="sim-info-block">
+                <div class="sim-badge">CRACKED &bull; UNLOCKED</div>
+                <h3 class="sim-title">Avion Flight Simulator</h3>
+                <div class="sim-meta-tags">
+                  <span class="meta-tag">APK Package</span>
+                  <span class="meta-tag">95 MB</span>
+                  <span class="meta-tag green-tag">All Aircraft Unlocked</span>
+                </div>
+              </div>
+            </div>
+            <p class="sim-summary">
+              Sophisticated flight simulation featuring 12 detailed aircraft, 5 commercial airports, diverse weather conditions, and immersive cockpit perspectives.
+            </p>
+            <div class="sim-card-footer">
+              <a href="./installations/android/Avion%20Flight%20Simulator.apk" download="Avion Flight Simulator.apk" class="btn-download-apk" id="downloadAvionFlight">
+                <span class="btn-dl-icon">⬇</span>
+                <span class="btn-dl-text">DOWNLOAD APK (95 MB)</span>
+              </a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      <div class="footer-copy">
+        &copy; 2026 Aeronautics E-book Vault. For educational and testing purposes only. All aviation trademarks belong to their respective manufacturers.
+      </div>
+      <div class="footer-links">
+        <a href="/homepage" class="spa-link">/homepage</a>
+        <span>&bull;</span>
+        <a href="/e-book" class="spa-link">/e-book</a>
+        <span>&bull;</span>
+        <a href="/diagrams" class="spa-link">/diagrams</a>
+        <span>&bull;</span>
+        <a href="/analytics" class="spa-link">/analytics</a>
+        <span>&bull;</span>
+        <a href="/login" class="spa-link">/login</a>
+        <span>&bull;</span>
+        <a href="/splash" class="spa-link" id="footerResetDemo">/splash</a>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- STEP 5: AERONAUTICS E-BOOK 1000-CHAPTER INTERACTIVE READER -->
+  <!-- ======================================================== -->
+  <section class="screen-view hidden-view" id="ebookReaderScreen">
+    
+    <!-- Reader Top Wide Toolbar (Draw, Highlight, Annotate, Laser, Jump, Audio) -->
+    <header class="ebook-wide-toolbar glass-panel">
+      <!-- Left: Title & Exit to Dashboard -->
+      <div class="toolbar-brand-group">
+        <a href="/homepage" class="btn-toolbar-back" id="btnExitEbook" title="Back to Flight Deck Dashboard">
+          &larr; EXIT TO DASHBOARD
+        </a>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-book-title">
+          <span class="toolbar-badge">1000 CHAPTERS</span>
+          <span class="toolbar-heading">AERONAUTICS <span class="no-break-ebook">E-BOOK</span></span>
+        </div>
+      </div>
+
+      <!-- Center: Interactive Annotation Tools (Draw, Highlight, Annotate, Laser) -->
+      <div class="toolbar-tools-group" role="toolbar" aria-label="E-Book Annotation Tools">
+        <button class="tool-btn active" id="toolPointer" data-tool="pointer" title="Cursor / Select" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>
+          <span class="tool-label">SELECT</span>
+        </button>
+
+        <button class="tool-btn" id="toolDraw" data-tool="draw" title="Freehand Sketch / Pen" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+          <span class="tool-label">DRAW</span>
+        </button>
+
+        <button class="tool-btn" id="toolHighlight" data-tool="highlight" title="Text Highlighter" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11-6 6v3h3l6-6"></path><path d="m22 12-4.6 4.6a2.78 2.78 0 0 1-3.9 0L7.4 10.5a2.78 2.78 0 0 1 0-3.9L12 2"></path></svg>
+          <span class="tool-label">HIGHLIGHT</span>
+        </button>
+
+        <button class="tool-btn" id="toolAnnotate" data-tool="annotate" title="Drop Sticky Annotation Note" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span class="tool-label">ANNOTATE</span>
+        </button>
+
+        <button class="tool-btn" id="toolLaser" data-tool="laser" title="Laser Pointer Beam" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
+          <span class="tool-label">LASER</span>
+        </button>
+
+        <!-- Palette / Color Picker for annotations -->
+        <div class="tool-color-picker" id="toolColorPicker">
+          <span class="color-dot active" data-color="#00f0ff" style="background:#00f0ff;" title="Neon Cyan"></span>
+          <span class="color-dot" data-color="#00ff9d" style="background:#00ff9d;" title="Neon Green"></span>
+          <span class="color-dot" data-color="#ffb700" style="background:#ffb700;" title="Amber Yellow"></span>
+          <span class="color-dot" data-color="#ff3366" style="background:#ff3366;" title="Laser Pink"></span>
+        </div>
+
+        <button class="tool-btn tool-btn-secondary" id="btnClearCanvas" title="Clear Page Drawings" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span class="tool-label">CLEAR</span>
+        </button>
+      </div>
+
+      <!-- Right: Navigation Dropdown & Read Aloud -->
+      <div class="toolbar-actions-group">
+        <button class="btn-narration" id="btnReadAloud" title="Read Aloud Narration" type="button">
+          <span class="narration-icon">🎙️</span>
+          <span class="narration-text" id="readAloudText">READ ALOUD</span>
+        </button>
+
+        <!-- Quick Jump to Chapter 1..1000 -->
+        <div class="chapter-jump-box">
+          <label for="chapterInput" class="jump-label">CH:</label>
+          <input type="number" id="chapterInput" min="1" max="1000" value="1" class="jump-input" title="Jump to Chapter (1-1000)">
+          <span class="jump-total">/ 1000</span>
+          <button class="btn-jump-go" id="btnJumpGo" title="Go to Chapter" type="button">GO</button>
+        </div>
+
+        <!-- Table of Contents Modal Trigger -->
+        <button class="btn-toc-open" id="btnOpenToc" title="Open Chapter Index (1000 Chapters)" type="button">
+          INDEX 📑
+        </button>
+      </div>
+    </header>
+
+    <!-- Main E-Book Stage: Left Button, Glass Book Page, Right Button -->
+    <div class="ebook-stage-container">
+      
+      <!-- Left Navigation Button (PREVIOUS) -->
+      <button class="ebook-nav-btn nav-btn-prev" id="btnPrevPage" title="Previous Page (Left Arrow or Backspace)" type="button">
+        <div class="nav-icon-wrap">
+          <svg class="nav-arrow-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </div>
+        <span class="nav-label">PREVIOUS</span>
+        <span class="nav-meta-badge" id="prevMetaLabel">START</span>
+      </button>
+
+      <!-- Center Reading Document on Glassmorphism -->
+      <main class="ebook-document-wrapper">
+        <article class="ebook-glass-page liquid-glass" id="ebookPageContainer">
+          
+          <!-- Drawing and Highlighting Canvas Layer -->
+          <canvas class="ebook-drawing-canvas" id="ebookDrawingCanvas"></canvas>
+          
+          <!-- Laser Pointer Follower -->
+          <div class="ebook-laser-pointer" id="ebookLaserPointer" aria-hidden="true"></div>
+
+          <!-- Sticky Notes Anchor Layer -->
+          <div class="ebook-annotations-layer" id="ebookAnnotationsLayer"></div>
+
+          <!-- Document Header Info -->
+          <div class="page-meta-header">
+            <div class="meta-left">
+              <span class="discipline-chip" id="pageDisciplineChip">AERODYNAMICS &amp; FLUID MECHANICS</span>
+              <span class="chapter-number-badge" id="pageChapterBadge">CHAPTER 1 // 1000</span>
+            </div>
+            <div class="meta-right">
+              <!-- 5-Page Indicator Pills -->
+              <div class="page-dots-indicator" id="pageDotsContainer">
+                <button class="page-dot active" data-page="1" title="Page 1: Fundamental Principles" type="button">1</button>
+                <button class="page-dot" data-page="2" title="Page 2: Interactive Simulation Lab" type="button">2</button>
+                <button class="page-dot" data-page="3" title="Page 3: Engineering Schematics" type="button">3</button>
+                <button class="page-dot" data-page="4" title="Page 4: Flight Case Study" type="button">4</button>
+                <button class="page-dot" data-page="5" title="Page 5: Technical System Integration" type="button">5</button>
+                <button class="page-dot" data-page="6" title="Page 6: Chapter Mastery Quiz" type="button">6</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Chapter Title & Subtitle -->
+          <header class="page-title-section">
+            <h1 class="page-main-heading" id="pageMainHeading"></h1>
+            <p class="page-sub-heading" id="pageSubHeading"></p>
+          </header>
+
+          <!-- Dynamic Page Content (5 Distinct Pages per Chapter) -->
+          <div class="page-dynamic-content" id="pageDynamicContent">
+            <!-- Injected via JavaScript based on Chapter (1-1000) & Page (1-5) -->
+          </div>
+
+          <!-- Page Footer Navigation & Progress -->
+          <footer class="page-meta-footer">
+            <div class="footer-left">
+              <span class="reading-time" id="readingTimeEstimate"></span>
+              <span class="bullet-sep">&bull;</span>
+              <span class="status-verified">AUTHORIZATION: VERIFIED</span>
+            </div>
+            <div class="footer-center">
+              <span id="pageProgressIndicator">PAGE 1 OF 6</span>
+            </div>
+            <div class="footer-right">
+              <button class="btn-mark-read" id="btnMarkChapterRead" title="Mark this Chapter as Read" type="button">
+                <span id="markReadIcon">✓</span> <span id="markReadText">MARK CHAPTER READ</span>
+              </button>
+            </div>
+          </footer>
+
+        </article>
+      </main>
+
+      <!-- Right Navigation Button (NEXT) -->
+      <button class="ebook-nav-btn nav-btn-next" id="btnNextPage" title="Next Page (Right Arrow or Space)" type="button">
+        <div class="nav-icon-wrap">
+          <svg class="nav-arrow-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+        <span class="nav-label">NEXT</span>
+        <span class="nav-meta-badge" id="nextMetaLabel">PAGE 2</span>
+      </button>
+
+    </div>
+
+    <!-- Bottom Global Progress Bar -->
+    <div class="ebook-bottom-progress-bar">
+      <div class="progress-bar-fill" id="ebookTotalProgressBar" style="width: 0.1%"></div>
+      <div class="progress-info-row">
+        <span id="globalChapterCount">CHAPTER 1 OF 1000</span>
+        <span id="globalLearnedPct">PROGRESS: 0% LEARNED</span>
+      </div>
+    </div>
+
+        <!-- Table of Contents Modal (1000 Chapters Browser) -->
+    <div class="hud-modal toc-modal-wrapper" id="tocModal" role="dialog" aria-hidden="true">
+      <div class="modal-backdrop" id="tocBackdrop"></div>
+      <div class="modal-dialog toc-dialog">
+        
+        <!-- Header -->
+        <div class="toc-header">
+          <div class="toc-header-left">
+            <div class="toc-badge-row">
+              <span class="toc-portal-chip">AERONAUTICS MASTER CATALOG</span>
+              <span class="toc-count-badge" id="tocResultsCount">1,000 CHAPTERS</span>
+            </div>
+            <h3 class="toc-main-title">1,000 Chapters Directory</h3>
+            <p class="toc-sub-title">
+              Instant search, discipline navigation, and direct sortie jump across all 100 syllabus parts.
+            </p>
+          </div>
+          <button class="toc-close-btn" id="tocCloseBtn" type="button" aria-label="Close catalog">&times;</button>
+        </div>
+
+        <!-- Controls Toolbar (Search + Quick Filters + Part Selector) -->
+        <div class="toc-toolbar-controls">
+          <div class="toc-search-wrapper">
+            <span class="toc-search-icon">🔍</span>
+            <input type="text" id="tocSearchInput" placeholder="Filter by chapter title, syllabus part, keyword, or number (e.g. 450, Bernoulli, Mach)..." class="toc-search-input" autocomplete="off" />
+            <button type="button" class="toc-search-clear" id="btnTocClearSearch" style="display:none;" title="Clear search">&times;</button>
+          </div>
+          
+          <div class="toc-filter-row">
+            <div class="toc-status-filters" id="tocStatusFilters">
+              <button type="button" class="toc-status-btn active" data-status="all">ALL (1,000)</button>
+              <button type="button" class="toc-status-btn" data-status="certified">✓ CERTIFIED (<span id="tocCertifiedCount">0</span>)</button>
+              <button type="button" class="toc-status-btn" data-status="unread">⏳ UNREAD (<span id="tocUnreadCount">1,000</span>)</button>
+            </div>
+            
+            <div class="toc-part-picker-wrapper">
+              <span class="tpp-label">JUMP TO PART:</span>
+              <select id="tocPartSelector" class="toc-part-select">
+                <option value="all">-- All 100 Parts --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discipline Tabs Carousel (with sleek hidden scrollbar) -->
+        <div class="toc-tabs-container">
+          <button type="button" class="toc-scroll-arrow left" id="btnTocScrollLeft" aria-label="Scroll disciplines left">‹</button>
+          <div class="toc-disciplines-tabs" id="tocDisciplinesTabs">
+            <!-- 10 Domain Filter Pills injected dynamically -->
+          </div>
+          <button type="button" class="toc-scroll-arrow right" id="btnTocScrollRight" aria-label="Scroll disciplines right">›</button>
+        </div>
+
+        <!-- 1000 Chapter Cards Grid -->
+        <div class="toc-chapters-grid" id="tocChaptersList">
+          <!-- 1000 Chapter Cards Injected Dynamically -->
+        </div>
+
+        <!-- Footer Bar with Quick Stats & Jump -->
+        <div class="toc-footer-bar">
+          <div class="tfb-info" id="tocFooterInfo">Showing 1,000 chapters across 100 parts</div>
+          <div class="tfb-legend">
+            <span class="legend-item"><span class="legend-dot green"></span> Certified</span>
+            <span class="legend-item"><span class="legend-dot cyan"></span> Current Chapter</span>
+            <span class="legend-item"><span class="legend-dot grey"></span> Unread</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: DOWNLOAD SIMULATOR & PROGRESS DIALOG -->
+  <!-- ======================================================== -->
+  <div class="hud-modal" id="downloadModal" role="dialog" aria-hidden="true">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-dialog glass-panel">
+      <button class="modal-close" id="modalCloseBtn" aria-label="Close dialog">&times;</button>
+      <div class="modal-header">
+        <div class="portal-badge" id="modalBadge">DISPATCHING ARCHIVE</div>
+        <h3 class="modal-title" id="modalTitle">Initialising High-Speed Mirror...</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-file-info" id="modalFileInfo">
+          <span>Target File: <code>FlightSim_v4.2_Cracked_Installer.exe</code></span>
+          <span>Size: <strong>68.4 GB</strong></span>
+        </div>
+
+        <div class="download-progress-box">
+          <div class="progress-bar-rail">
+            <div class="progress-bar-fill" id="downloadProgressBar" style="width: 0%"></div>
+          </div>
+          <div class="progress-labels">
+            <span id="downloadStatusText">Connecting to High-Speed Peer Swarm...</span>
+            <span id="downloadPercentageText">0%</span>
+          </div>
+          <div class="download-metrics-row">
+            <span>Speed: <strong id="downloadSpeed">48.2 MB/s</strong></span>
+            <span>ETA: <strong id="downloadEta">2m 14s</strong></span>
+            <span>Hash: <code id="downloadHash">SHA256: 8f9b...a10e</code></span>
+          </div>
+        </div>
+
+        <div class="modal-instructions" id="modalExtraText">
+          Your direct download mirror token has been authorized. If your browser blocks popups, click the manual mirror link below.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary-hud" id="btnModalPrimaryAction">COPY DIRECT MAGNET LINK</button>
+        <button class="btn-secondary-hud" id="btnModalCancel">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: INSTALLATION GUIDE & SPEC CHECKER -->
+  <!-- ======================================================== -->
+  <div class="hud-modal" id="guideModal" role="dialog" aria-hidden="true">
+    <div class="modal-backdrop" id="guideBackdrop"></div>
+    <div class="modal-dialog glass-panel">
+      <button class="modal-close" id="guideCloseBtn" aria-label="Close dialog">&times;</button>
+      <div class="modal-header">
+        <div class="portal-badge" id="guideBadge">STEP-BY-STEP INSTRUCTIONS</div>
+        <h3 class="modal-title" id="guideTitle">Installation Guide</h3>
+      </div>
+      <div class="modal-body" id="guideContent">
+        <!-- Injected via JavaScript dynamically -->
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary-hud" id="guideOkBtn">UNDERSTOOD</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- ======================================================== -->
+  <!-- MODAL: CONGRATULATION LETTER & MASTER CERTIFICATION -->
+  <!-- ======================================================== -->
+  <div class="hud-modal congratulation-modal" id="congratulationModal" role="dialog" aria-hidden="true">
+    <div class="modal-backdrop" id="congratulationBackdrop"></div>
+    <canvas class="celebration-confetti-canvas" id="celebrationConfettiCanvas"></canvas>
+    
+    <div class="modal-dialog glass-panel congratulation-dialog">
+      <button class="modal-close" id="congratulationCloseBtn" aria-label="Close dialog">&times;</button>
+      
+      <div class="congratulation-letter-wrapper">
+        <div class="gold-seal-badge">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ffb700" stroke-width="2">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+        </div>
+
+        <div class="letter-header">
+          <div class="letter-super-title">OFFICIAL COMMENDATION OF AERONAUTICAL MASTERY</div>
+          <h2 class="letter-title">CONGRATULATIONS, AEROSPACE ENGINEER!</h2>
+          <div class="letter-date" id="congratulationDate">OCTOBER 20, 2026</div>
+        </div>
+
+        <div class="letter-parchment">
+          <p class="letter-salutation">To Our Distinguished Aerospace Scholar &amp; Aviator,</p>
+          <p class="letter-body-lead">
+            By decree of the Ultimate Aeronautics Academic Board, it is our highest honor to confer upon you this <strong>Certificate of Supreme Aeronautical Mastery</strong> in recognition of your successful completion of all <strong>1,000 Chapters</strong> across the complete 100-Part Aeronautics Curriculum.
+          </p>
+          <p class="letter-body-text">
+            From the foundational discoveries of Sir George Cayley and the Wright brothers, through continuum fluid dynamics, transonic wing geometry, high-bypass turbofan thermodynamic cycles, and fly-by-wire flight control laws, to advanced orbital mechanics and interplanetary trajectory design — you have demonstrated unparalleled technical dedication, analytical precision, and engineering excellence.
+          </p>
+
+          <div class="certificate-stats-grid">
+            <div class="cert-stat-box">
+              <span class="cert-stat-val">1,000</span>
+              <span class="cert-stat-lbl">CHAPTERS MASTERED</span>
+            </div>
+            <div class="cert-stat-box">
+              <span class="cert-stat-val">100</span>
+              <span class="cert-stat-lbl">PARTS COMPLETED</span>
+            </div>
+            <div class="cert-stat-box">
+              <span class="cert-stat-val">100%</span>
+              <span class="cert-stat-lbl">CURRICULUM SCORE</span>
+            </div>
+            <div class="cert-stat-box">
+              <span class="cert-stat-val">TOP 0.1%</span>
+              <span class="cert-stat-lbl">HONOR ROLL STANDING</span>
+            </div>
+          </div>
+
+          <div class="letter-signature-row">
+            <div class="signature-block">
+              <div class="sig-line">Dr. Theodore von Kármán</div>
+              <div class="sig-title">Chair, Aerodynamic Sciences</div>
+            </div>
+            <div class="official-stamp-box">
+              <div class="stamp-circle">
+                <span>SEAL OF</span>
+                <strong>EXCELLENCE</strong>
+                <span>1000 CH</span>
+              </div>
+            </div>
+            <div class="signature-block">
+              <div class="sig-line">Wilbur &amp; Orville Wright</div>
+              <div class="sig-title">Foundational Flight Directorate</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 24px; justify-content: center;">
+          <button class="btn-primary-hud" id="btnShareCertificate">
+            <span>🎓</span>
+            <span>PRINT / SAVE DIPLOMA</span>
+          </button>
+          <button class="btn-secondary-hud" id="btnCloseCongratulation">
+            RETURN TO FLIGHT DECK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- ============================================== -->
+  <!-- FLIGHT STUDY & LEARNING ANALYTICS MODAL -->
+  <!-- ============================================== -->
+  <div class="hud-modal study-analytics-modal" id="studyAnalyticsModal" role="dialog" aria-hidden="true">
+    <div class="modal-backdrop" id="analyticsBackdrop"></div>
+    <div class="modal-dialog analytics-dialog">
+      <!-- Modal Header -->
+      <div class="analytics-header">
+        <div class="analytics-title-group">
+          <div class="analytics-badge-row">
+            <span class="analytics-badge-chip">AERONAUTICS TELEMETRY FLIGHT LOG</span>
+            <span class="analytics-pilot-chip" id="anPilotCallsignChip">CALLSIGN: PILOT</span>
+          </div>
+          <h2 class="analytics-main-heading">Flight Study &amp; Aeronautical Learning Analysis</h2>
+          <p class="analytics-sub-heading">Real-time study telemetry, curriculum completion forecasts, discipline mastery &amp; sortie history.</p>
+        </div>
+        <button class="analytics-close-btn" id="closeAnalyticsBtn" type="button" aria-label="Close analytics modal">&times;</button>
+      </div>
+
+      <!-- Modal Body (Scrollable with Liquid Glass sections) -->
+      <div class="analytics-body" id="analyticsBodyContent">
+        
+        <!-- 1. Hero Summary & Rank Card -->
+        <div class="analytics-hero-card">
+          <div class="ahc-rank-col">
+            <span class="ahc-section-tag">PILOT ACCREDITATION STATUS</span>
+            <div class="ahc-rank-badge" id="anRankBadge">FLIGHT CADET</div>
+            <div class="ahc-rank-level" id="anRankTier">TIER I // BASIC AERONAUTICS TRAINEE</div>
+            <div class="ahc-rank-progress-wrapper">
+              <div class="ahc-rank-bar">
+                <div class="ahc-rank-fill" id="anRankFill" style="width: 5%;"></div>
+              </div>
+              <span class="ahc-rank-next" id="anRankNext">Next Rank: Junior Flight Officer (100 Chapters)</span>
+            </div>
+          </div>
+
+          <div class="ahc-overall-col">
+            <div class="ahc-dial-wrapper">
+              <svg class="ahc-dial-svg" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" class="dial-bg"></circle>
+                <circle cx="60" cy="60" r="50" class="dial-fill" id="anDialFill" stroke-dasharray="314.15" stroke-dashoffset="314.15"></circle>
+              </svg>
+              <div class="ahc-dial-center">
+                <span class="ahc-dial-pct" id="anOverallPct">0.0%</span>
+                <span class="ahc-dial-lbl">MASTERED</span>
+              </div>
+            </div>
+            <div class="ahc-stats-summary">
+              <div class="ahc-stat-row">
+                <span class="ahc-lbl">CURRICULUM LOAD:</span>
+                <span class="ahc-val text-cyan" id="anChaptersRatio">0 / 1,000 Chapters</span>
+              </div>
+              <div class="ahc-stat-row">
+                <span class="ahc-lbl">TOTAL SYLLABUS:</span>
+                <span class="ahc-val">100 Parts // 6,000 Pages</span>
+              </div>
+              <div class="ahc-stat-row">
+                <span class="ahc-lbl">MISSION READINESS:</span>
+                <span class="ahc-val text-green" id="anMissionReadiness">FLIGHT DECK STANDBY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Dual Pillars: How Much Studied VS How Much Remaining -->
+        <div class="analytics-dual-grid">
+          <!-- Pillar A: HOW MUCH STUDIED -->
+          <div class="analytics-pillar-card pillar-studied">
+            <div class="apc-header">
+              <span class="apc-icon">📘</span>
+              <span class="apc-title">HOW MUCH STUDIED (LOGGED SORTIES)</span>
+            </div>
+            <div class="apc-metrics-list">
+              <div class="apc-metric-item">
+                <span class="ami-label">Chapters Certified:</span>
+                <strong class="ami-value text-green" id="anStudiedChapters">0 Chapters</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Engineering Pages Read:</span>
+                <strong class="ami-value" id="anStudiedPages">0 / 6,000 Pages</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Technical Diagrams Analyzed:</span>
+                <strong class="ami-value" id="anStudiedDiagrams">0 / 5,000 Diagrams</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Physics Simulations Run:</span>
+                <strong class="ami-value text-cyan" id="anStudiedSims">0 Executed</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">CAD Hotspots Inspected:</span>
+                <strong class="ami-value" id="anStudiedPins">0 / 5,000 Pins</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Quizzes Passed &amp; Certified:</span>
+                <strong class="ami-value text-amber" id="anStudiedQuizzes">0 Passed</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pillar B: HOW MUCH REMAINING -->
+          <div class="analytics-pillar-card pillar-remaining">
+            <div class="apc-header">
+              <span class="apc-icon">🎯</span>
+              <span class="apc-title">HOW MUCH REMAINING (SORTIE DEFICIT)</span>
+            </div>
+            <div class="apc-metrics-list">
+              <div class="apc-metric-item">
+                <span class="ami-label">Remaining Chapters:</span>
+                <strong class="ami-value text-amber" id="anRemainingChapters">1,000 Chapters</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Remaining Pages:</span>
+                <strong class="ami-value" id="anRemainingPages">6,000 Pages</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Remaining Diagrams:</span>
+                <strong class="ami-value" id="anRemainingDiagrams">5,000 Diagrams</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Est. Flight Study Hours Remaining:</span>
+                <strong class="ami-value text-cyan" id="anRemainingHours">~400.0 Hours</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Target Completion Forecast:</span>
+                <strong class="ami-value" id="anProjectedDate">Calculating Flight Velocity...</strong>
+              </div>
+              <div class="apc-metric-item">
+                <span class="ami-label">Remaining Curriculum Load:</span>
+                <strong class="ami-value text-red" id="anRemainingPct">100.0% Remaining</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. WHEN STUDIED (Temporal & Flight Ops History) -->
+        <div class="analytics-section-card">
+          <div class="asc-header">
+            <span class="asc-icon">⏱️</span>
+            <span class="asc-title">WHEN STUDIED (TEMPORAL FLIGHT OPS &amp; SESSIONS)</span>
+          </div>
+          <div class="temporal-grid">
+            <div class="tg-cell">
+              <span class="tg-lbl">LAST STUDY SESSION</span>
+              <strong class="tg-val" id="anLastSession">Active Now</strong>
+            </div>
+            <div class="tg-cell">
+              <span class="tg-lbl">TOTAL LOGGED STUDY TIME</span>
+              <strong class="tg-val text-cyan" id="anTotalStudyTime">0h 0m Logged</strong>
+            </div>
+            <div class="tg-cell">
+              <span class="tg-lbl">CURRENT STUDY STREAK</span>
+              <strong class="tg-val text-amber" id="anCurrentStreak">🔥 1 Day Streak</strong>
+            </div>
+            <div class="tg-cell">
+              <span class="tg-lbl">PEAK SORTIE WINDOW</span>
+              <strong class="tg-val" id="anPeakWindow">Afternoon Ops (14:00 - 18:00)</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 10 MORE ADVANCED AERONAUTICAL ANALYTICS -->
+        <div class="analytics-section-card">
+          <div class="asc-header">
+            <span class="asc-icon">🔬</span>
+            <span class="asc-title">10 COMPREHENSIVE AEROSPACE LEARNING ANALYTICS</span>
+          </div>
+
+          <!-- 4.1 Discipline Mastery Breakdown (10 Disciplines) -->
+          <div class="advanced-metric-block">
+            <h4 class="amb-title">1. DISCIPLINE MASTERY BREAKDOWN (10 AEROSPACE DOMAINS)</h4>
+            <div class="disciplines-mastery-grid" id="anDisciplinesGrid">
+              <!-- Dynamically populated 10 discipline progress bars -->
+            </div>
+          </div>
+
+          <!-- 4.2 & 4.3: Quiz Accuracy + Reading Velocity -->
+          <div class="analytics-row-2col">
+            <div class="amb-subcard">
+              <h4 class="amb-title">2. FLIGHT ENGINEER QUIZ ACCURACY</h4>
+              <div class="amb-highlight-val text-green" id="anQuizAccuracy">100.0%</div>
+              <p class="amb-desc" id="anQuizStatsDesc">First-attempt pass accuracy across all attempted chapter knowledge checks.</p>
+            </div>
+            <div class="amb-subcard">
+              <h4 class="amb-title">3. STUDY VELOCITY &amp; READING PACE</h4>
+              <div class="amb-highlight-val text-cyan" id="anReadingSpeed">~4.0 min / ch</div>
+              <p class="amb-desc" id="anReadingPaceDesc">Average sortie duration per chapter based on page dwell telemetry.</p>
+            </div>
+          </div>
+
+          <!-- 4.4 & 4.5: Interactive Simulation Time + CAD Hotspot Coverage -->
+          <div class="analytics-row-2col mt-3">
+            <div class="amb-subcard">
+              <h4 class="amb-title">4. 60 FPS SIMULATOR LAB ENGAGEMENT</h4>
+              <div class="amb-highlight-val text-amber" id="anSimEngagement">High Activity</div>
+              <p class="amb-desc">Interactive aerodynamics, jet engine &amp; Mach shockwave slider adjustments recorded.</p>
+            </div>
+            <div class="amb-subcard">
+              <h4 class="amb-title">5. CAD STRUCTURAL COMPONENT COVERAGE</h4>
+              <div class="amb-highlight-val text-cyan" id="anCadCoverage">0 Pins Inspected</div>
+              <p class="amb-desc">Hotspot metallurgy, allowable stress &amp; hydraulic hinge lines queried.</p>
+            </div>
+          </div>
+
+          <!-- 4.6 Weekly Activity Heatmap -->
+          <div class="advanced-metric-block mt-3">
+            <h4 class="amb-title">6. 7-DAY WEEKLY STUDY SORTIE ACTIVITY</h4>
+            <div class="weekly-activity-bar-chart">
+              <div class="wabc-day"><div class="wabc-bar" style="height: 45%;"></div><span>MON</span></div>
+              <div class="wabc-day"><div class="wabc-bar" style="height: 60%;"></div><span>TUE</span></div>
+              <div class="wabc-day"><div class="wabc-bar" style="height: 85%;"></div><span>WED</span></div>
+              <div class="wabc-day"><div class="wabc-bar" style="height: 50%;"></div><span>THU</span></div>
+              <div class="wabc-day"><div class="wabc-bar" style="height: 95%;"></div><span>FRI</span></div>
+              <div class="wabc-day"><div class="wabc-bar" style="height: 70%;"></div><span>SAT</span></div>
+              <div class="wabc-day active"><div class="wabc-bar" style="height: 100%;"></div><span>SUN</span></div>
+            </div>
+          </div>
+
+          <!-- 4.7 Recent Sortie Flight Log -->
+          <div class="advanced-metric-block mt-3">
+            <h4 class="amb-title">7. RECENT SORTIE FLIGHT LOG (LAST STUDIED CHAPTERS)</h4>
+            <div class="recent-sorties-list" id="anRecentSortiesList">
+              <!-- Dynamically populated recent chapters -->
+            </div>
+          </div>
+
+          <!-- 4.8 Next Recommended Mission -->
+          <div class="next-mission-card mt-3">
+            <div class="nmc-info">
+              <span class="nmc-label">8. NEXT RECOMMENDED SORTIE TARGET:</span>
+              <h4 class="nmc-title" id="anNextMissionTitle">Chapter 1: Introduction to Aeronautics</h4>
+              <p class="nmc-sub" id="anNextMissionPart">Part 1: Discovering Aeronautics (1–10)</p>
+            </div>
+            <button type="button" class="btn-launch-mission" id="btnLaunchNextMission">
+              LAUNCH MISSION ➔
+            </button>
+          </div>
+
+          <!-- 4.9 Flight Badges & Medals -->
+          <div class="advanced-metric-block mt-3">
+            <h4 class="amb-title">9. AERONAUTICAL FLIGHT MEDALS &amp; ACHIEVEMENTS</h4>
+            <div class="medals-grid" id="anMedalsGrid">
+              <!-- 6 Aerospace Medals populated via JavaScript -->
+            </div>
+          </div>
+
+          <!-- 4.10 Data Export & Logbook Management -->
+          <div class="advanced-metric-block mt-3">
+            <h4 class="amb-title">10. LOGBOOK EXPORT &amp; RECORDS MANAGEMENT</h4>
+            <div class="logbook-actions-row">
+              <button type="button" class="btn-logbook-export" id="btnExportLogbookJson">
+                📥 EXPORT FLIGHT LOG (JSON)
+              </button>
+              <button type="button" class="btn-logbook-print" id="btnPrintStudyReport">
+                🖨️ PRINT STUDY REPORT
+              </button>
+              <button type="button" class="btn-logbook-reset" id="btnResetStudyProgress">
+                ⚠️ RESET LOGBOOK
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="chapters_data.js"></script>
+  <script src="chapter_curriculum.js"></script>
+  <script src="script.js"></script>
+
+  <!-- ======================================================== -->
+  <!-- 5,000 TECHNICAL BLUEPRINTS & DIAGRAMS EXPLORER MODAL -->
+  <!-- ======================================================== -->
+  <div class="hud-modal diagrams-modal-wrapper" id="diagramsCatalogModal" role="dialog" aria-hidden="true">
+    <div class="modal-backdrop" id="diagramsBackdrop"></div>
+    <div class="modal-dialog diagrams-dialog">
+      
+      <!-- Header -->
+      <div class="diagrams-header">
+        <div class="diagrams-header-left">
+          <div class="diagrams-badge-row">
+            <span class="diagrams-portal-chip">AERONAUTICS 5,000 BLUEPRINTS ARCHIVE</span>
+            <span class="diagrams-count-badge" id="diagramsTotalBadge">5,000 / 5,000 DIAGRAMS READY</span>
+          </div>
+          <h3 class="diagrams-main-title">5,000 Certified Engineering Diagrams Archive</h3>
+          <p class="diagrams-sub-title">
+            Every chapter (1 to 1,000) contains 5 distinct, precision-engineered technical diagrams covering theory, sensor telemetry, CAD architecture, operational envelopes, and avionics.
+          </p>
+        </div>
+        <button class="diagrams-close-btn" id="diagramsCloseBtn" type="button" aria-label="Close blueprints archive">&times;</button>
+      </div>
+
+      <!-- Storage & Bandwidth Analytics Card -->
+      <div class="diagrams-storage-card">
+        <div class="dsc-header">
+          <span class="dsc-icon">💾</span>
+          <span class="dsc-title">WEBSITE STORAGE &amp; 5,000 DIAGRAMS BANDWIDTH METRICS</span>
+        </div>
+        <div class="dsc-grid">
+          <div class="dsc-cell active-cell">
+            <span class="dsc-label">PROCEDURAL VECTOR ENGINE (ACTIVE)</span>
+            <span class="dsc-val text-cyan">18.5 MB (0.018 GB)</span>
+            <span class="dsc-sub">Instant 60 FPS &bull; Infinite 8K Vector Sharpness &bull; Zero Lag</span>
+          </div>
+          <div class="dsc-cell">
+            <span class="dsc-label">BITMAP RASTER EQUIVALENT (1080P PNG)</span>
+            <span class="dsc-val text-amber">7.32 GB (7,500 MB)</span>
+            <span class="dsc-sub">5,000 files &bull; ~1.5 MB avg per high-res diagram plate</span>
+          </div>
+          <div class="dsc-cell">
+            <span class="dsc-label">4K MASTER ARCHIVE EQUIVALENT</span>
+            <span class="dsc-val text-magenta">13.67 GB (14,000 MB)</span>
+            <span class="dsc-sub">5,000 files &bull; ~2.8 MB avg uncompressed 4K master plate</span>
+          </div>
+          <div class="dsc-cell">
+            <span class="dsc-label">BANDWIDTH &amp; LATENCY EFFICIENCY</span>
+            <span class="dsc-val text-green">99.76% REDUCTION</span>
+            <span class="dsc-sub">Zero network wait &bull; Mathematical vector synthesis on-demand</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explorer Controls: Chapter Jump & Diagram Selector -->
+      <div class="diagrams-controls-toolbar">
+        <div class="diagrams-ch-selector">
+          <button class="d-step-btn" id="btnDiagPrevCh" type="button" title="Previous Chapter">&larr; PREV CH</button>
+          <div class="d-ch-input-wrap">
+            <label for="diagramChInput" class="d-ch-lbl">CHAPTER:</label>
+            <input type="number" id="diagramChInput" min="1" max="1000" value="1" class="d-ch-input" />
+            <span class="d-ch-total">/ 1,000</span>
+          </div>
+          <button class="d-step-btn" id="btnDiagNextCh" type="button" title="Next Chapter">NEXT CH &rarr;</button>
+        </div>
+
+        <!-- 5 Diagram Tabs -->
+        <div class="diagrams-tab-group" role="tablist">
+          <button class="d-tab active" data-diagram="1" type="button">DIAGRAM 1 // THEORY</button>
+          <button class="d-tab" data-diagram="2" type="button">DIAGRAM 2 // SENSORS</button>
+          <button class="d-tab" data-diagram="3" type="button">DIAGRAM 3 // CAD HOTSPOTS</button>
+          <button class="d-tab" data-diagram="4" type="button">DIAGRAM 4 // ENVELOPE</button>
+          <button class="d-tab" data-diagram="5" type="button">DIAGRAM 5 // AVIONICS</button>
+        </div>
+      </div>
+
+      <!-- Blueprint Stage Viewer -->
+      <div class="diagrams-stage-viewer">
+        <div class="d-viewer-meta-row">
+          <div class="d-meta-left">
+            <span class="d-badge" id="dViewerBadge">FIG 1.1 // THEORETICAL SCHEMATIC</span>
+            <span class="d-chapter-title" id="dViewerChTitle">Chapter 1: Introduction to Aeronautics</span>
+          </div>
+          <div class="d-meta-right">
+            <span class="d-spec-tag" id="dViewerSpec">SYS REF: DIN-EN-9100 / CH-0001-D1</span>
+            <span class="d-meta-tag" id="dViewerDiscipline">AERODYNAMICS &amp; AIRFLOW</span>
+          </div>
+        </div>
+
+        <div class="d-svg-stage-container" id="dViewerSvgStage">
+          <!-- Dynamically Injected SVG Diagram -->
+        </div>
+
+        <!-- Live Engineering Telemetry Strip -->
+        <div class="d-telemetry-strip" id="dViewerTelemetry">
+          <div class="d-tel-item"><span class="d-tel-k">STANDARDS:</span> <span class="d-tel-v" id="telDin">DIN-EN-9100 / ISO-1151</span></div>
+          <div class="d-tel-item"><span class="d-tel-k">TOLERANCE:</span> <span class="d-tel-v text-cyan" id="telTol">±0.025 mm</span></div>
+          <div class="d-tel-item"><span class="d-tel-k">REYNOLDS NO:</span> <span class="d-tel-v" id="telRe">3.45 × 10⁶</span></div>
+          <div class="d-tel-item"><span class="d-tel-k">FLIGHT MACH:</span> <span class="d-tel-v text-amber" id="telMach">M 0.78</span></div>
+          <div class="d-tel-item"><span class="d-tel-k">PRESSURE RATIO:</span> <span class="d-tel-v" id="telPr">28.4:1</span></div>
+          <div class="d-tel-item"><span class="d-tel-k">STRESS LOAD:</span> <span class="d-tel-v text-green" id="telStress">285 MPa</span></div>
+        </div>
+
+        <!-- Viewer Actions -->
+        <div class="d-viewer-actions">
+          <button class="btn-d-action btn-d-open-reader" id="btnDiagOpenReader" type="button">
+            📖 OPEN THIS CHAPTER IN E-BOOK READER &rarr;
+          </button>
+          <button class="btn-d-action btn-d-export-svg" id="btnDiagExportSvg" type="button">
+            ⬇ EXPORT SVG BLUEPRINT FILE
+          </button>
+        </div>
+
+        <!-- Direct Image Link Address & HTML <img> Tag Embedder -->
+        <div class="diagram-embed-panel">
+          <div class="dep-header">
+            <span class="dep-title">🌐 DIRECT IMAGE LINK ADDRESS &amp; HTML &lt;IMG&gt; TAG GENERATOR</span>
+            <span class="dep-badge">5,000 READY-TO-PASTE LINKS</span>
+          </div>
+
+          <div class="dep-grid">
+            <!-- Direct Image URL -->
+            <div class="dep-cell">
+              <label class="dep-lbl" for="inpDirectImgUrl">DIRECT IMAGE LINK ADDRESS (URL):</label>
+              <div class="dep-input-row">
+                <input type="text" readonly id="inpDirectImgUrl" class="dep-input" value="http://localhost:5173/diagrams/AER-0001-D1.svg" />
+                <button type="button" class="btn-copy-embed" id="btnCopyImgUrl" title="Copy Direct Image URL">📋 COPY LINK</button>
+              </div>
+              <span class="dep-hint">Direct image URL &bull; Paste directly into browser or HTML &lt;img src="..."&gt;.</span>
+            </div>
+
+            <!-- HTML <img> Tag -->
+            <div class="dep-cell">
+              <label class="dep-lbl" for="inpImgTag">HTML &lt;IMG&gt; TAG (COPY &amp; PASTE IN ANY HTML PAGE):</label>
+              <div class="dep-input-row">
+                <input type="text" readonly id="inpImgTag" class="dep-input" value='&lt;img src="http://localhost:5173/diagrams/AER-0001-D1.svg" alt="AER-0001-D1 Blueprint" width="760" height="260" /&gt;' />
+                <button type="button" class="btn-copy-embed" id="btnCopyImgTag" title="Copy HTML <img> Tag">📋 COPY &lt;IMG&gt;</button>
+              </div>
+              <span class="dep-hint">Standard HTML tag &bull; Native 60 FPS vector &bull; Zero storage overhead.</span>
+            </div>
+          </div>
+
+          <!-- Cloud Hosting Integration Info -->
+          <div class="dep-cloud-bar">
+            <div class="dcb-left">
+              <span class="dcb-title">☁️ FREE CLOUD IMAGE HOST CONVERTER:</span>
+              <span class="dcb-desc">
+                If local storage is limited, upload diagrams to free image hosts (<strong>ImgBB</strong> / <strong>PostImages</strong>) via <code>python scripts/upload_to_image_host.py</code> to get permanent external <code>https://i.ibb.co/...</code> image link addresses.
+              </span>
+            </div>
+            <a href="/diagram_image_links.html" target="_blank" class="btn-open-catalog" id="btnOpenHtmlCatalog" title="Open full 5000 image links catalog">
+              📂 OPEN 5,000 LINKS CATALOG &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
